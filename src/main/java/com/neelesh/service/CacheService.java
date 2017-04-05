@@ -3,6 +3,9 @@ package com.neelesh.service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.core.env.Environment;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
@@ -34,6 +37,7 @@ public class CacheService {
 	private String collectionName ; 
 	private String hashKey ; 
 	private String addretaileridtocollection ; 
+	private int fieldvalue ; 
 	
 	private void setConfigDataForSegment( String segment ) throws Exception { 
 		urlToCall = env.getProperty("" + segment + ".url") ; 
@@ -62,15 +66,18 @@ public class CacheService {
 	}
  
 	private String getDataFromURL( String requestJson ) {
-			RestTemplate restTemplate = new RestTemplate() ; 
-			return  restTemplate.postForObject( urlToCall , requestJson , String.class);
+			logger.info( "Getting data from URL : " + urlToCall ); 
+			RestTemplate restTemplate = new RestTemplate() ;
+			HttpHeaders headers = new HttpHeaders();
+			headers.setContentType(MediaType.APPLICATION_JSON);
+
+			HttpEntity<String> entity = new HttpEntity<String>(requestJson ,headers);			
+			return  restTemplate.postForObject( urlToCall , entity , String.class );
 	}
 	
-	private void saveDataToMongo( String responseJson ) { 
-		JSONObject jsonObject = new JSONObject(responseJson) ;
-		String retid = jsonObject.getString("retailerid") ;
+	private void saveDataToMongo( String responseJson  ) { 
 		try { 
-			databaseService.addDataById(collectionName, hashKey, retid, responseJson);
+			databaseService.addDataById(collectionName, hashKey, fieldvalue , responseJson);
 		} catch ( Exception ex ) { System.out.println( " not able to save : " + ex.getLocalizedMessage())  ; } 
 	}
 	
@@ -81,16 +88,19 @@ public class CacheService {
 		try { 
 			setConfigDataForSegment( segment ) ;
 			JSONObject jsonObject = new JSONObject(requestJson) ;
-			String retid = jsonObject.getString("retailerid") ;
+			fieldvalue = jsonObject.getInt(fieldsToAccount) ;
 			if ( addretaileridtocollection.equalsIgnoreCase("yes")) 
-				this.collectionName = this.collectionName + retid ; 
+				this.collectionName = this.collectionName + "_" +  fieldvalue ; 
 			createHashKey(requestJson) ;
-			logger.info("Created Hashkey : " + hashKey + "  Collection Name : " + collectionName + " Retailer ID : " + retid ) ; 
+			logger.info("Created Hashkey : " + hashKey + "  Collection Name : " + collectionName + " Retailer ID : " + fieldvalue ) ; 
 			return getMongoData( collectionName , hashKey ) ;
 		} catch (Exception ex ) { 
 			// data not found or some exception - execute main url .... 
 			returnMessage = getDataFromURL( requestJson ) ;
-			saveDataToMongo( returnMessage) ; 
+			try { 
+				saveDataToMongo( returnMessage) ;
+			} catch ( Exception exl ) {  logger.error( "Error saving data returning the response as is " + exl.getLocalizedMessage()) ; }  
+			
 		}
 		return returnMessage ; 
 	}

@@ -21,7 +21,7 @@ public class DatabaseService {
 	
 	public String getDataById( String collection , String keyId ) throws Exception {
 			// MongoOperations moration = getInstance() ; 
-			System.out.println( "Calling getDataByID Key : "+ keyId ) ;
+			logger.info( "Calling getDataByID Key : "+ keyId ) ;
 			try { 
 			MongoJSON mj = mongoTemplate.findById(keyId, MongoJSON.class, collection ) ;
 			
@@ -29,7 +29,7 @@ public class DatabaseService {
 				if ( mj.getJsondata().length() > 0 )
 					return mj.getJsondata() ; 
 			} catch ( Exception ex ) { 
-				System.out.println( ex.getLocalizedMessage()) ; 
+				logger.error( ex.getLocalizedMessage()) ; 
 				ex.printStackTrace(); 
 			}
 		
@@ -38,18 +38,18 @@ public class DatabaseService {
 	}
 	
 	
-	public void addDataById( String collection , String keyId , String rid , String json ) {
+	public void addDataById( String collection , String keyId , int rid , String json ) {
 		//MongoOperations moration = getInstance() ; 
 		logger.info( "Adding to collection  " + collection + " for key : " + keyId + " for retailer " + rid ) ; 
 		try { 
 			MongoJSON mj = new MongoJSON() ; 
 			mj.setId( keyId ); 
 			mj.setDatecached(new Date() );
-			mj.setRetid( rid ); 
+			mj.setRetailerid( rid ); 
 			mj.setJsondata(json);
 			mongoTemplate.insert(mj, collection); 
 		} catch ( Exception ex) { 
-			System.out.println( ex.getMessage() ) ; 
+			logger.error( ex.getMessage() ) ; 
 			ex.printStackTrace(); 
 		}
 		
