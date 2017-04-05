@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<config>
+	<service>
+		<url>cachedtest</url>
+		<forwardurl>http://localhost:8080/couchbase-cache/checkjson</forwardurl>
+		<collectioname>test</collectioname>
+		<fieldlist>agecnyid</fieldlist>
+		<prefix></prefix>
+	</service>
+	<service>
+		<url>filter</url>
+		<forwardurl>http://localhost:8080/couchbase-cache/postpos</forwardurl>
+		<collectioname>avalon</collectioname>
+		<prefix>id</prefix>
+		<fieldlist></fieldlist>
+	</service>
+</config>

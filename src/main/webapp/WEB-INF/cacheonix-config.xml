@@ -1,0 +1,14 @@
+<?xml version ="1.0"?>
+<cacheonix xsi:schemaLocation="http://www.cacheonix.org/schema/configuration http://www.cacheonix.org/schema/cacheonix-config-2.0.xsd"
+        xmlns="http://www.cacheonix.org/schema/configuration"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+   <tempDir path="d:/java/temp"/>
+
+   <local>
+      <localCache name="MyCacheonixWebCache">
+         <store>
+            <lru maxBytes="50mb"/>
+         </store>
+      </localCache>
+   </local>
+</cacheonix>
