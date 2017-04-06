@@ -1,13 +1,21 @@
 package com.neelesh.service;
 
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
+import java.util.Set;
 
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 
+import com.mongodb.DBCollection;
+import com.mongodb.DBObject;
 import com.neelesh.pojo.MongoJSON;
 
 
@@ -54,4 +62,43 @@ public class DatabaseService {
 		}
 		
 	}
+	
+	public List<String[]> listCollectionCount() { 
+		Set<String> set = mongoTemplate.getCollectionNames();
+		List<String[]> retList = new ArrayList<String[]>() ; 
+		logger.info( "Getting collection Names  ! " + set.size() ); 
+		StringBuilder sb = new StringBuilder() ; 
+		int i = 1 ; 
+	    if (!CollectionUtils.isEmpty(set)) {
+	        for (String collectionName : set) {
+	            try {
+	            	DBCollection collection = mongoTemplate.getCollection(collectionName);
+	            	logger.info( i + "	:	" + collectionName + "	:	" + collection.count() ); 
+	            	Query q = new Query().with(new Sort(Sort.Direction.DESC, "datecached"));
+	            	MongoJSON element = mongoTemplate.findOne(q, MongoJSON.class,collectionName);	            	
+	            	String[] st = new String[4] ; 
+	            	st[0] = "" + i++ ; st[1] = collectionName ; st[2] = "" + collection.count() ; st[3] = element.getDatecached().toString() ; 
+	            	retList.add(st) ; 
+	            }
+	            catch (Exception e) {
+	                logger.error(e.getLocalizedMessage() , e ); 
+	            }
+	        }
+	    }
+	    return retList ; 
+		
+	}
+	public String dropCollection(String collectionName ) {
+		String returntext = "Collection : " + collectionName + " Successfully dropped.  !!!!!!!!!!!!!!!" ;
+		logger.info("Request for dropping the collection received for collection --------> " + collectionName );
+		try { 
+			mongoTemplate.dropCollection(collectionName);
+			logger.info("collection --------> " + collectionName + "    IS D R O P P E D !!! ");
+		} catch ( Exception ex ) { 
+			returntext = "Error : " + ex.getLocalizedMessage() ; 
+			
+		}
+		return returntext ; 
+	}
+	
 }

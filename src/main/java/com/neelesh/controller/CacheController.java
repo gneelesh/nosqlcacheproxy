@@ -1,5 +1,7 @@
 package com.neelesh.controller;
 
+import java.util.List;
+
 import org.apache.log4j.Logger;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.ModelAndView;
 
 import com.neelesh.service.CacheService ; 
 
@@ -20,6 +23,20 @@ public class CacheController {
 	protected CacheService cacheService  ;  
 	
 	private static final Logger logger = Logger.getLogger(CacheService.class);
+	
+	@RequestMapping(value = "/collections", method = RequestMethod.GET)
+	public ModelAndView printCollections() {
+		List<String[]> clist = cacheService.getCollectionData() ;
+		ModelAndView model = new ModelAndView("collection");
+		model.addObject("clist" , clist) ; 
+		return model ; 
+	}
+
+
+	@RequestMapping(value = "/dropcollection/{collectionname}", method = RequestMethod.GET)
+	public String dropCollection(@PathVariable("collectionname") String collectionname) {
+		return  cacheService.dropCollection(collectionname) ; 
+	}
 	
 	
 	

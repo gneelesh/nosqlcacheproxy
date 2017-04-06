@@ -31,7 +31,6 @@
 		class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
 		<property name="location" value="classpath:applicationContext.properties" />
 	</bean>
-
     <!-- Mongo DB Beans -->
 	<mongo:mongo id="replicaSetMongo" replica-set="${mongo.replica.set}" />
 	<bean id="mongoTemplate" class="org.springframework.data.mongodb.core.MongoTemplate">		
@@ -44,6 +43,15 @@
 		<constructor-arg name="username" value="${mongo.username}" />
 		<constructor-arg name="password" value="${mongo.password}" />
 	</bean>
+	<bean
+		class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+		<property name="prefix">
+			<value>/WEB-INF/pages/</value>
+		</property>
+		<property name="suffix">
+			<value>.jsp</value>
+		</property>
+	</bean>	
 	<mvc:resources mapping="/resources/**" location="/resources/" /> 
 	<mvc:annotation-driven />
 </beans>

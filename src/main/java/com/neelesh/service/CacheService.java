@@ -11,6 +11,7 @@ import org.springframework.web.client.RestTemplate;
 
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.util.List;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
@@ -38,6 +39,16 @@ public class CacheService {
 	private String hashKey ; 
 	private String addretaileridtocollection ; 
 	private int fieldvalue ; 
+
+	public List<String[]> getCollectionData(){
+		return databaseService.listCollectionCount() ; 
+		
+	}
+	
+	public String dropCollection( String collectionName ) { 
+		return databaseService.dropCollection(collectionName) ; 
+	}
+	
 	
 	private void setConfigDataForSegment( String segment ) throws Exception { 
 		urlToCall = env.getProperty("" + segment + ".url") ; 
@@ -91,6 +102,8 @@ public class CacheService {
 			fieldvalue = jsonObject.getInt(fieldsToAccount) ;
 			if ( addretaileridtocollection.equalsIgnoreCase("yes")) 
 				this.collectionName = this.collectionName + "_" +  fieldvalue ; 
+			
+			requestJson = jsonObject.toString() ; 
 			createHashKey(requestJson) ;
 			logger.info("Created Hashkey : " + hashKey + "  Collection Name : " + collectionName + " Retailer ID : " + fieldvalue ) ; 
 			return getMongoData( collectionName , hashKey ) ;
