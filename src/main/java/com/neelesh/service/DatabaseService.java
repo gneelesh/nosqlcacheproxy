@@ -15,7 +15,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
 import com.mongodb.DBCollection;
-import com.mongodb.DBObject;
 import com.neelesh.pojo.MongoJSON;
 
 
@@ -29,7 +28,7 @@ public class DatabaseService {
 	
 	public String getDataById( String collection , String keyId ) throws Exception {
 			// MongoOperations moration = getInstance() ; 
-			logger.info( "Calling getDataByID Key : "+ keyId ) ;
+			logger.info( "Calling getDataByID Key : "+ keyId + " collection : " + collection ) ; 
 			try { 
 			MongoJSON mj = mongoTemplate.findById(keyId, MongoJSON.class, collection ) ;
 			

@@ -33,12 +33,12 @@ public class CacheService {
 	
 	private static final Logger logger = Logger.getLogger(CacheService.class);
 	
-	private String urlToCall ;
-	private String fieldsToAccount ;
-	private String collectionName ; 
-	private String hashKey ; 
-	private String addretaileridtocollection ; 
-	private int fieldvalue ; 
+	private static String urlToCall ;
+	private static String fieldsToAccount ;
+	private static String collectionName ; 
+	private static boolean addretaileridtocollection ;
+	private static boolean passthrough ; 
+	private static boolean addretailerdatetokey ; 
 
 	public List<String[]> getCollectionData(){
 		return databaseService.listCollectionCount() ; 
@@ -51,17 +51,21 @@ public class CacheService {
 	
 	
 	private void setConfigDataForSegment( String segment ) throws Exception { 
-		urlToCall = env.getProperty("" + segment + ".url") ; 
-		fieldsToAccount = env.getProperty("" + segment + ".fields") ;
-		addretaileridtocollection = env.getProperty("" + segment + ".addretaileridtocollection") ;
-		collectionName = env.getProperty("" + segment + ".collection") ;
-		if ( urlToCall == null || fieldsToAccount == null || collectionName == null )
-			throw new Exception("Fields not proper") ; 
+		if ( urlToCall == null || urlToCall.length() == 0 ) { 
+			urlToCall = env.getProperty("" + segment + ".url") ; 
+			fieldsToAccount = env.getProperty("" + segment + ".fields") ;
+			addretaileridtocollection = env.getProperty("" + segment + ".addretaileridtocollection").equalsIgnoreCase("yes") ;
+			addretailerdatetokey = env.getProperty("" + segment + ".addretailerdatetokey").equalsIgnoreCase("yes") ;
+			collectionName = env.getProperty("" + segment + ".collection") ;
+			passthrough = env.getProperty("" + segment + ".collection").equalsIgnoreCase("yes") ;  
+			if ( urlToCall == null || fieldsToAccount == null || collectionName == null )
+				throw new Exception("Fields not proper") ; 
+		}
 	}
 	
-	private void createHashKey( String message ) throws NoSuchAlgorithmException, InvalidKeyException { 
-		hashKey = getHashKey( message ) ; 
-	}
+/*	private String createHashKey( String message ) throws NoSuchAlgorithmException, InvalidKeyException { 
+		return getHashKey( message ) ; 
+	}*/
 	
 	private String getHashKey( String message ) throws NoSuchAlgorithmException, InvalidKeyException { 
 		String secret = "secret";
@@ -86,36 +90,62 @@ public class CacheService {
 			return  restTemplate.postForObject( urlToCall , entity , String.class );
 	}
 	
-	private void saveDataToMongo( String responseJson  ) { 
+	
+	private void saveDataToMongo( String responseJson , String local_collectioname , String hashKey , int retailerid) {
+		logger.debug("Response JSON Length before minify : " + responseJson.length()); 
+		JSONObject jsonObject = new JSONObject(responseJson) ;
+		responseJson = jsonObject.toString() ; 
+		logger.debug("Response JSON Length after minify : " + responseJson.length());
 		try { 
-			databaseService.addDataById(collectionName, hashKey, fieldvalue , responseJson);
+			databaseService.addDataById(local_collectioname, hashKey, retailerid , responseJson);
 		} catch ( Exception ex ) { System.out.println( " not able to save : " + ex.getLocalizedMessage())  ; } 
 	}
 	
+	
+/*	private void saveDataToMongo( String responseJson  ) { 
+		try { 
+			databaseService.addDataById(collectionName, hashKey, fieldvalue , responseJson);
+		} catch ( Exception ex ) { System.out.println( " not able to save : " + ex.getLocalizedMessage())  ; } 
+	}*/
+	
 	public String getData( String segment , String requestJson  )   {
 		// get property based on segment.
-		logger.info("Got request for segment : " + segment ) ;
+		if ( passthrough ) {
+			logger.info( "Passthrough request received for url : " + urlToCall );
+			return getDataFromURL( requestJson ) ;
+		}
+		
+		String local_collectioname = collectionName ;
+		String hashKey = "" ; 
+		int retailerid = 0  ; 
+		logger.info("Got request for segment : " + segment + " Request JSON Length : " + requestJson.length() ) ;
 		String returnMessage = "" ; 
 		try { 
+			// get configuration data from .properties file. 
 			setConfigDataForSegment( segment ) ;
+			// convert request into small minify json
 			JSONObject jsonObject = new JSONObject(requestJson) ;
-			fieldvalue = jsonObject.getInt(fieldsToAccount) ;
-			if ( addretaileridtocollection.equalsIgnoreCase("yes")) 
-				this.collectionName = this.collectionName + "_" +  fieldvalue ; 
-			
-			requestJson = jsonObject.toString() ; 
-			createHashKey(requestJson) ;
-			logger.info("Created Hashkey : " + hashKey + "  Collection Name : " + collectionName + " Retailer ID : " + fieldvalue ) ; 
-			return getMongoData( collectionName , hashKey ) ;
+			retailerid = jsonObject.getInt(fieldsToAccount) ;
+			local_collectioname = ( addretaileridtocollection ? collectionName + "_"+ retailerid : collectionName ) ;
+			hashKey = getHashKey( jsonObject.toString() + ( addretailerdatetokey ? getDateStringMiliseconds(retailerid ) : "" )) ;
+			logger.debug( "Request JSON length after minify : " + jsonObject.length() + " json -> " + jsonObject.toString() ) ; 
+			logger.info("Created Hashkey : " + hashKey + "  Collection Name : " + collectionName + " Retailer ID : " + retailerid ) ; 
+			return getMongoData( local_collectioname , hashKey ) ;
 		} catch (Exception ex ) { 
 			// data not found or some exception - execute main url .... 
 			returnMessage = getDataFromURL( requestJson ) ;
 			try { 
-				saveDataToMongo( returnMessage) ;
-			} catch ( Exception exl ) {  logger.error( "Error saving data returning the response as is " + exl.getLocalizedMessage()) ; }  
+				saveDataToMongo( returnMessage , local_collectioname , hashKey , retailerid ) ;
+			} catch ( Exception exl ) {  
+					logger.error( "Error saving data returning the response as is " + exl.getLocalizedMessage(),exl) ; 
+			}  
 			
 		}
 		return returnMessage ; 
+	}
+	
+	private String getDateStringMiliseconds( int retailerid ) { 
+		return "" ; 
 	}
 
 }
