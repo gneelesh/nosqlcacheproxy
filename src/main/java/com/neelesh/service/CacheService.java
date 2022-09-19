@@ -57,7 +57,7 @@ public class CacheService {
 			addretaileridtocollection = env.getProperty("" + segment + ".addretaileridtocollection").equalsIgnoreCase("yes") ;
 			addretailerdatetokey = env.getProperty("" + segment + ".addretailerdatetokey").equalsIgnoreCase("yes") ;
 			collectionName = env.getProperty("" + segment + ".collection") ;
-			passthrough = env.getProperty("" + segment + ".collection").equalsIgnoreCase("yes") ;  
+			passthrough = env.getProperty("" + segment + ".passthrough").equalsIgnoreCase("yes") ;  
 			if ( urlToCall == null || fieldsToAccount == null || collectionName == null )
 				throw new Exception("Fields not proper") ; 
 		}
